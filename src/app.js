@@ -10,6 +10,8 @@ const cors = require("cors")
 const http = require("http")
 require("dotenv").config() // process.env.PORT process.env.DB_URL
 const fn = require("socket.io")
+const { Chat } = require("./models/chat")
+const {chatRoutes} = require("./Routes/chatRoutes")
 
 
 const server = http.createServer(app)
@@ -25,12 +27,31 @@ io.on("connection", (socket) => {
     socket.on("joinRoom", ({senderId, receiverId}) => {
         const roomID = [senderId , receiverId].sort().join("_")
         socket.join(roomID)
+
+
+        socket.on("sendMsg", async({message, senderId, receiverId}) => {
+            // console.log(message)
+            
+            let foundChat = await Chat.findOne({participants : {$all : [senderId, receiverId]}})
+    
+            if(!foundChat)
+            {
+                foundChat = new Chat({
+                    participants : [senderId, receiverId],
+                    messages : []
+                })
+            }
+
+
+            foundChat.messages.push({senderId, text : message})
+
+            await foundChat.save()
+    
+            io.to(roomID).emit("receiveMsg", {message, senderId})
+        })
     })
 
-    socket.on("sendMsg", ({message, senderId}) => {
-        // console.log(message)
-        io.emit("receiveMsg", {message, senderId})
-    })
+    
 })
 
 
@@ -56,3 +77,4 @@ app.use("/auth", authRouter)
 app.use("/profile", profileRouter)
 app.use("/connection", connectionRequestRouter)
 app.use("/user", userRouter)
+app.use("/chat", chatRoutes)
