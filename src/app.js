@@ -18,7 +18,7 @@ const server = http.createServer(app)
 
 const io = fn(server, {
     cors : {
-        origin : "https://final-noisy-fe.onrender.com"
+        origin : "https://noisy.co.in"
     }
 })
 
@@ -69,7 +69,7 @@ connectDB()
 
 app.use(cors({
     credentials : true,
-    origin : "https://final-noisy-fe.onrender.com"
+    origin : "https://noisy.co.in"
 }))
 app.use(express.json()) // parses req.body
 app.use(cookieParser()) // parses
