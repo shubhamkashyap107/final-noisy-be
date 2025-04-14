@@ -12,7 +12,7 @@ router.get("/:receiverId", isLoggedIn, async(req, res) => {
     const senderId = req.ID
 
     const foundChat = await Chat.findOne({participants : {$all : [senderId, receiverId]}})
-    console.log(foundChat)
+    // console.log(foundChat)
 
     if(!foundChat)
     {
