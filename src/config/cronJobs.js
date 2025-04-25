@@ -3,9 +3,8 @@ const axios = require("axios")
 const { ConnectionRequest } = require("../models/connectionRequest")
 
 
-// cron.schedule('0 10 * * *', async() => {
-    cron.schedule('* * * * * *', async() => {
-    
+cron.schedule('0 10 * * *', async() => {
+
     const allRequest = await ConnectionRequest.find({status : "interested"})
 
     const temp = allRequest.map((item) => {
