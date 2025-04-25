@@ -5,6 +5,8 @@ const bcrypt = require("bcrypt")
 const validator = require("validator")
 const jwt = require("jsonwebtoken")
 const { isLoggedIn } = require("../middlewares/isLoggedIn")
+const { default: axios } = require("axios")
+const { OTP } = require("../models/OTP")
 
 
 router.post("/signup" ,async(req, res) => {
@@ -22,6 +24,7 @@ router.post("/signup" ,async(req, res) => {
         res.status(200).json({"msg" : "User registered successfully", data : createdUser})
     } catch(e)
     {
+        // console.log(e)
         res.status(400).json({"msg" : "User already exists"})
     }
 })
@@ -53,7 +56,8 @@ router.post("/login", async(req, res) => {
             res.status(401).json({"msg" : "Invalid Credentials"})
         }
     } catch (error) {
-        res.json({"error" : "Please enter all the fields"})
+        console.log(error)
+        res.json({"error" : error.message})
     }
     
 })
@@ -68,6 +72,44 @@ router.get("/logout", isLoggedIn ,async(req, res) => {
    }
 })
 
+
+router.get("/verify-mail/:email", async(req, res) => {
+    try {
+    console.log("OK")
+
+        const email = req.params.email
+        const resFromMailMicroservice = await axios.get("http://localhost:8081/mail/" + email + "/otp" )
+        if(resFromMailMicroservice.status == 200)
+        {
+            // console.log("OK")
+            const otp = resFromMailMicroservice.data.otp
+            const newOtp = await OTP.create({email, otp})
+            await newOtp.save()
+            return res.json({msg : "OTP Generated"})
+        }
+    } catch (error) {
+        // console.log(error)
+        res.status(400).json("Something Went Wrong")
+    }
+})
+
+
+
+router.get("/verify-otp/:otp", async(req, res) => {
+try {
+    const otp = req.params.otp
+    const foundOtp = await OTP.findOne({otp : otp})
+    if(!foundOtp)
+    {
+        return res.status(404).json({msg : "Invalid OTP / OTP Expired"})
+    }
+
+    res.status(200).json({msg : "Okay"})
+} catch (error) {
+    res.status(400).json("Something Went Wrong")
+}
+    
+})
 
 
 module.exports = {

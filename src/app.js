@@ -12,13 +12,14 @@ require("dotenv").config() // process.env.PORT process.env.DB_URL
 const fn = require("socket.io")
 const { Chat } = require("./models/chat")
 const {chatRoutes} = require("./Routes/chatRoutes")
+// require("./config/cronJobs")
 
 
 const server = http.createServer(app)
 
 const io = fn(server, {
     cors : {
-        origin : "https://noisy.co.in"
+        origin : ["https://noisy.co.in", "http://localhost:5173"]
     }
 })
 
@@ -69,7 +70,7 @@ connectDB()
 
 app.use(cors({
     credentials : true,
-    origin : "https://noisy.co.in"
+    origin : ["https://noisy.co.in", "http://localhost:5173"]
 }))
 app.use(express.json()) // parses req.body
 app.use(cookieParser()) // parses
