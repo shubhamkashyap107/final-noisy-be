@@ -4,6 +4,14 @@ const{isLoggedIn} = require("../middlewares/isLoggedIn")
 const { User } = require("../models/user")
 const bcrypt = require("bcrypt")
 const validator = require("validator")
+const OpenAI = require('openai');
+
+const openai = new OpenAI({
+  apiKey: process.env.GPT_KEY,
+});
+
+
+
 
 
 router.get("/", isLoggedIn ,async(req, res) => {
@@ -64,6 +72,31 @@ router.patch("/edit/password", isLoggedIn, async(req ,res) => {
 })
 
 
+
+router.post('/generate-bio', async (req, res) => {
+  const { interests } = req.body;
+
+  if (!interests) {
+    return res.status(400).json({ error: 'Interests are required' });
+  }
+
+  try {
+    const response = await openai.chat.completions.create({
+      model: 'gpt-3.5-turbo',
+      messages: [
+        { role: 'system', content: 'You write flirty and fun dating bios. Even if the interests are not valid/good, then also you are supposed to return a bio, never return anything other than a bio. Max length should be 50 charcaters, you may or may not use emojis.' },
+        { role: 'user', content: `Here are my interests: ${interests}` },
+      ],
+      temperature: 1,
+      max_tokens: 150,
+    });
+
+    res.json({ bio: response.choices[0].message.content });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to generate bio' });
+  }
+});
 
 
 

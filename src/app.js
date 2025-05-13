@@ -1,3 +1,4 @@
+require("dotenv").config() // process.env.PORT process.env.DB_URL
 const express = require("express")
 const app = express()
 const {authRouter} = require("./Routes/authRoutes")
@@ -8,7 +9,6 @@ const {connectDB} = require("./config/db")
 const cookieParser = require('cookie-parser')
 const cors = require("cors")
 const http = require("http")
-require("dotenv").config() // process.env.PORT process.env.DB_URL
 const fn = require("socket.io")
 const { Chat } = require("./models/chat")
 const {chatRoutes} = require("./Routes/chatRoutes")

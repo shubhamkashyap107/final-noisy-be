@@ -12,20 +12,29 @@ const { OTP } = require("../models/OTP")
 router.post("/signup" ,async(req, res) => {
     try{
         const{emailId, password, username} = req.body
+        const foundOtp = await OTP.findOne({email : emailId, isVerified:true})
+        if(!foundOtp)
+        {
+            throw new Error("Please verify your email first")
+        }
         const flag = validator.isStrongPassword(password)
         if(!flag)
         {
             throw new Error("Please Enter a strong password")
         }
         const hashedPassword = await bcrypt.hash(password, 10)
-        let createdUser = await User.insertOne({username, emailId, password : hashedPassword})
+        // let createdUser = (await User.insertOne({username, emailId, password : hashedPassword})).validate()
+        const createdUser = await User.create({
+            username, emailId, password : hashedPassword
+        })
+        await createdUser.save()
         const token = createdUser.getJWT()
         res.cookie("token", token)
         res.status(200).json({"msg" : "User registered successfully", data : createdUser})
     } catch(e)
     {
         // console.log(e)
-        res.status(400).json({"msg" : "User already exists"})
+        res.status(400).json({"msg" : e.message})
     }
 })
 
@@ -75,21 +84,25 @@ router.get("/logout", isLoggedIn ,async(req, res) => {
 
 router.get("/verify-mail/:email", async(req, res) => {
     try {
-    console.log("OK")
-
+        console.log("OK")
         const email = req.params.email
+        const foundUser = await User.findOne({emailId : email})
+        if(foundUser)
+        {
+            throw new Error("User already exists")
+        }
         const resFromMailMicroservice = await axios.get("http://localhost:8081/mail/" + email + "/otp" )
         if(resFromMailMicroservice.status == 200)
         {
             // console.log("OK")
             const otp = resFromMailMicroservice.data.otp
-            const newOtp = await OTP.create({email, otp})
+            const newOtp = await OTP.create({email, otp, isVerified : false})
             await newOtp.save()
             return res.json({msg : "OTP Generated"})
         }
     } catch (error) {
         // console.log(error)
-        res.status(400).json("Something Went Wrong")
+        res.status(400).json({msg : error.message})
     }
 })
 
@@ -103,6 +116,8 @@ try {
     {
         return res.status(404).json({msg : "Invalid OTP / OTP Expired"})
     }
+    foundOtp.isVerified = true
+    await foundOtp.save()
 
     res.status(200).json({msg : "Okay"})
 } catch (error) {
